@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor de Hábitos</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 5px 0; padding: 5px; border-bottom: 1px solid #ccc; cursor: pointer; }
+    .completado { text-decoration: line-through; color: green; }
+  </style>
+</head>
+<body>
+  <h1>Gestor de Hábitos</h1>
+
+  <input type="text" id="habito" placeholder="Nuevo hábito">
+  <input type="time" id="hora" placeholder="Hora del recordatorio">
+
+  <button onclick="agregarHabito()">Agregar Hábito</button>
+  <button onclick="completarHabito()">Completar Hábito</button>
+  <button onclick="eliminarHabito()">Eliminar Hábito</button>
+  <button onclick="agregarRecordatorio()">Agregar Recordatorio</button>
+  <button onclick="eliminarRecordatorio()">Eliminar Recordatorio</button>
+  <button onclick="mostrarHistorial()">Mostrar Historial</button>
+  <button onclick="mostrarGrafico()">Mostrar Gráfico</button>
+
+  <h2>Hábitos</h2>
+  <ul id="listaHabitos"></ul>
+
+  <h2>Recordatorios</h2>
+  <ul id="listaRecordatorios"></ul>
+
+  <h2>Estadísticas</h2>
+  <p id="estadisticas">Completados: 0/0 (0%)</p>
+
+  <script>
+    let habitos = JSON.parse(localStorage.getItem("habitos")) || [];
+    let recordatorios = JSON.parse(localStorage.getItem("recordatorios")) || [];
+    let historial = JSON.parse(localStorage.getItem("historial")) || [];
+
+    function guardarDatos() {
+      localStorage.setItem("habitos", JSON.stringify(habitos));
+      localStorage.setItem("recordatorios", JSON.stringify(recordatorios));
+      localStorage.setItem("historial", JSON.stringify(historial));
+    }
+
+    function actualizarLista() {
+      const lista = document.getElementById("listaHabitos");
+      lista.innerHTML = "";
+      habitos.forEach((habito, index) => {
+        const li = document.createElement("li");
+        li.textContent = habito.nombre;
+        li.className = habito.completado ? "completado" : "";
+        li.onclick = () => seleccionarHabito(index);
+        lista.appendChild(li);
+      });
+
+      const listaR = document.getElementById("listaRecordatorios");
+      listaR.innerHTML = "";
+      recordatorios.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = `${r.habito} - ${r.hora}`;
+        listaR.appendChild(li);
+      });
+
+      actualizarEstadisticas();
+    }
+
+    function actualizarEstadisticas() {
+      const total = habitos.length;
+      const completados = habitos.filter(h => h.completado).length;
+      const porcentaje = total ? (completados / total * 100).toFixed(1) : 0;
+      document.getElementById("estadisticas").textContent = `Completados: ${completados}/${total} (${porcentaje}%)`;
+    }
+
+    let habitoSeleccionado = null;
+    function seleccionarHabito(index) {
+      habitoSeleccionado = index;
+    }
+
+    function agregarHabito() {
+      const nombre = document.getElementById("habito").value;
+      if (nombre) {
+        habitos.push({ nombre, completado: false });
+        document.getElementById("habito").value = "";
+        guardarDatos();
+        actualizarLista();
+      }
+    }
+
+    function completarHabito() {
+      if (habitoSeleccionado !== null) {
+        let h = habitos[habitoSeleccionado];
+        h.completado = !h.completado;
+        if (h.completado) {
+          historial.push({ nombre: h.nombre, fecha: new Date().toLocaleString() });
+        }
+        guardarDatos();
+        actualizarLista();
+      }
+    }
+
+    function eliminarHabito() {
+      if (habitoSeleccionado !== null) {
+        habitos.splice(habitoSeleccionado, 1);
+        habitoSeleccionado = null;
+        guardarDatos();
+        actualizarLista();
+      }
+    }
+
+    function agregarRecordatorio() {
+      const habito = document.getElementById("habito").value;
+      const hora = document.getElementById("hora").value;
+      if (habito && hora) {
+        recordatorios.push({ habito, hora });
+        document.getElementById("habito").value = "";
+        document.getElementById("hora").value = "";
+        guardarDatos();
+        actualizarLista();
+      }
+    }
+
+    function eliminarRecordatorio() {
+      recordatorios.pop(); // Puedes hacer selección si prefieres
+      guardarDatos();
+      actualizarLista();
+    }
+
+    function mostrarHistorial() {
+      alert("Historial:\n" + historial.map(h => `${h.nombre} - ${h.fecha}`).join("\n"));
+    }
+
+    function mostrarGrafico() {
+      alert("En una versión avanzada, aquí iría un gráfico circular con librerías como Chart.js");
+    }
+
+    // Iniciar
+    actualizarLista();
+  </script>
+</body>
+</html>
